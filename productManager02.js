@@ -32,13 +32,52 @@ class ProductManager{
 
 // -----------------------------------------------------------
     addProduct = async(title, description, price, thumbnail, code, stock) =>{
-        return this.getProducts()
+        this.getProducts()
         .then( users => {
-            let id = users.length + 1
-            users.push({id,title, description, price, thumbnail, code, stock})
-            return users
+           let exist = users.find( (item) => item.code === code)
+
+           if(exist){
+               return 'exCode'
+           }else{
+            let id
+            users ? id = users.length + 1 : id = users[users.length-1].id + 1
+  
+
+             let newProduct = {
+                id,
+                title, 
+                description, 
+                price, 
+                thumbnail, 
+                code, 
+                stock,
+             }
+
+             if(!Object.values(newProduct).includes(undefined) && !Object.values(newProduct).includes('')){
+                users.push(newProduct)
+                return users
+             }else{
+                return 'empty'
+             }
+
+           }
+
         })
-        .then(newProduct => fs.promises.writeFile(this.path, JSON.stringify(newProduct)))
+        .then(newProduct => {
+            if(typeof newProduct === 'object'){
+                fs.promises.writeFile(this.path, JSON.stringify(newProduct))
+                return console.log(newProduct)
+            }else{
+                
+                switch(newProduct){
+                    case 'exCode':
+                        return console.log('Ya existe un producto con ese codigo')
+                    case 'empty':
+                        return console.log('Uno o mas campos se encuentran vacios')
+                }
+            }
+                
+        })
     }
 
 // -----------------------------------------------------------
@@ -53,15 +92,13 @@ class ProductManager{
   
 
             if(arreglo){
-                const id = data.id - 1
-                dataJson[id].title = data.title ? data.title : arreglo.title
-                dataJson[id].description = data.description ? data.description : arreglo.description
-                dataJson[id].price = data.price ? data.price : arreglo.price
-                dataJson[id].thumbnail = data.thumbnail ? data.thumbnail : arreglo.thumbnail
-                dataJson[id].code = data.code ? data.code : arreglo.code
-                dataJson[id].stock = data.stock ? data.stock : arreglo.stock
+                dataJson[data.id - 1].title = data.title ? data.title : arreglo.title
+                dataJson[data.id - 1].description = data.description ? data.description : arreglo.description
+                dataJson[data.id - 1].price = data.price ? data.price : arreglo.price
+                dataJson[data.id - 1].thumbnail = data.thumbnail ? data.thumbnail : arreglo.thumbnail
+                dataJson[data.id - 1].code = data.code ? data.code : arreglo.code
+                dataJson[data.id - 1].stock = data.stock ? data.stock : arreglo.stock
     
-
                 fs.writeFile(this.path, JSON.stringify(dataJson), (error) => {
                     if (error) {
                       console.error('Error al Actualizar el producto:', error);
@@ -88,17 +125,10 @@ class ProductManager{
         return fs.promises.readFile(this.path, this.format)
         .then(content => {
             const dataJson = JSON.parse( content )
-            let arreglo = dataJson.find( ( item ) => item.id === idProduc )
+            let arreglo = dataJson.findIndex( ( item ) => item.id === idProduc )
 
-            if(arreglo){
-                const id = idProduc - 1
-                dataJson[id].title = ''
-                dataJson[id].description = ''
-                dataJson[id].price = ''
-                dataJson[id].thumbnail = ''
-                dataJson[id].code = ''
-                dataJson[id].stock = ''
-
+            if(arreglo >= 0){
+                dataJson.splice(arreglo,1)
 
                 fs.writeFile(this.path, JSON.stringify(dataJson), (error) => {
                     if (error) {
@@ -126,8 +156,8 @@ class ProductManager{
 const manajer = new ProductManager('./users.json')
 
 add = async () =>{ 
-    manajer.addProduct('asdasd','asdasdasdasd','Pablo', 'Gonzalez', 27, 'JS Backemd')
-    console.log( await manajer.getProducts()) 
+    manajer.addProduct('12312','123','Pablo', 'Gonzalez', 222331217, 'JS Backemd')
+
 }
 
 searchAllProducts = async () =>{
@@ -147,11 +177,11 @@ deleted = async (idProduc) =>{
 }
 
 
-// add()
+add()
 // searchAllProducts()
 // searchByProduct(1)
 // upDateByProduct({"id":4, 'title':'nuevo', 'description':'nuevo'})
-// deleted(1)
+deleted(3)
 
 
 
